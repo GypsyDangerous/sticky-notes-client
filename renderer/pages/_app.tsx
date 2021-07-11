@@ -1,8 +1,15 @@
-import Head from 'next/head';
-import { useRouter } from 'next/router';
-import React, { useEffect } from 'react';
+import { MenuItemConstructorOptions, MenuItem, remote, ipcRenderer } from "electron";
+import Head from "next/head";
+import { useRouter } from "next/router";
+import React, { useEffect } from "react";
+import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from "@apollo/client";
 
-import GlobalStyle from '../styles/global.styles';
+const client = new ApolloClient({
+	uri: "http://localhost:2080/graphql",
+	cache: new InMemoryCache(),
+});
+
+import GlobalStyle from "../styles/global.styles";
 
 function MyApp({ Component, pageProps }) {
 	const router = useRouter();
@@ -13,11 +20,42 @@ function MyApp({ Component, pageProps }) {
 				if (document.querySelector(".titlebar")) return;
 				const customTitlebar = await import("custom-electron-titlebar");
 
+				const template: (MenuItemConstructorOptions | MenuItem)[] = [
+					{
+						label: "+",
+						click: async () => {
+							const {
+								data: { createNote },
+							} = await client.mutate({
+								mutation: gql`
+									mutation {
+										createNote {
+											owner
+											rawText
+											text
+											backgroundColor
+											id
+										}
+									}
+								`,
+							});
+							console.log(createNote);
+							ipcRenderer.send("open note", createNote.id);
+						},
+					},
+					{
+						label: "⚙",
+					},
+					{
+						label: "...",
+					},
+				];
+
 				let myTitleBar = new customTitlebar.Titlebar({
 					backgroundColor: customTitlebar.Color.fromHex("#17181ba1"),
 					maximizable: false,
 					minimizable: false,
-					menu: null,
+					menu: remote.Menu.buildFromTemplate(template),
 				});
 				myTitleBar.updateTitle("");
 			}
@@ -40,12 +78,12 @@ function MyApp({ Component, pageProps }) {
 					href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
 					rel="stylesheet"
 				/>
-				<link
+				{/* <link
 					rel="preload"
 					href="https://cdn.jsdelivr.net/gh//GypsyDangerous/simple-css-reset/reset.css"
 					as="style"
 				/>
-				<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh//GypsyDangerous/simple-css-reset/reset.css" />
+				<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh//GypsyDangerous/simple-css-reset/reset.css" /> */}
 				<link
 					rel="stylesheet"
 					href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.css"
@@ -68,7 +106,11 @@ function MyApp({ Component, pageProps }) {
 }
 
 const App = ({ Component, pageProps }) => {
-	return <MyApp Component={Component} pageProps={pageProps}></MyApp>;
+	return (
+		<ApolloProvider client={client}>
+			<MyApp Component={Component} pageProps={pageProps}></MyApp>
+		</ApolloProvider>
+	);
 };
 
 export default App;

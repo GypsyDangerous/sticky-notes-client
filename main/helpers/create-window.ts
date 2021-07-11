@@ -65,7 +65,7 @@ export const createWindow = (windowName: string, options: BrowserWindowConstruct
 
 	const browserOptions: BrowserWindowConstructorOptions = {
 		minHeight: 300,
-		minWidth: 290,
+		minWidth: 300,
 		frame: false,
 		...options,
 		...state,

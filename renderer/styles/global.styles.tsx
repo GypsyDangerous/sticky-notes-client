@@ -1,7 +1,4 @@
-import { motion } from "framer-motion";
-import styled from "styled-components";
-import chroma from "chroma-js";
-import { createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle } from 'styled-components';
 
 const GlobalStyle = createGlobalStyle`
 	:root{

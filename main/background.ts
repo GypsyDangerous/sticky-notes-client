@@ -14,9 +14,11 @@ const startMainWindow = () => {
 	const mainWindow = createWindow(isProd ? "main" : Math.random() + "", {
 		width: 320,
 		height: 650,
+		minWidth: 320,
+		minHeight: 650,
 	});
 
-	mainWindow.loadURL(baseUrl("main"));
+	mainWindow.loadURL(baseUrl());
 	mainWindow.on("focus", () => sendMessageToWindow("focus", true, mainWindow));
 	mainWindow.on("blur", () => sendMessageToWindow("focus", false, mainWindow));
 
@@ -24,6 +26,29 @@ const startMainWindow = () => {
 		mainWindow.setAlwaysOnTop(alwaysOnTop);
 	});
 };
+
+const noteWindows: { [id: string]: Electron.BrowserWindow } = {};
+const openNoteWindow = (id: string) => {
+	let window = noteWindows[id];
+	if (window) {
+		if (window.isMinimized()) window.restore();
+		window.focus();
+		return;
+	}
+	window = createWindow(id, {
+		height: 300,
+		width: 300,
+		minHeight: 300,
+		minWidth: 300,
+	});
+	noteWindows[id] = window;
+	window.loadURL(baseUrl(`notes/${id}`));
+	window.on("close", () => (noteWindows[id] = null));
+};
+
+ipcMain.on("open note", (event, id) => {
+	openNoteWindow(id);
+});
 
 (async () => {
 	await app.whenReady();
