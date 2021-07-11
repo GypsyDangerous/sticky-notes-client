@@ -9,9 +9,9 @@ if (isProd) {
 } else {
 	app.setPath("userData", `${app.getPath("userData")} (development)`);
 }
-
+let mainWindow: Electron.BrowserWindow;
 const startMainWindow = () => {
-	const mainWindow = createWindow(isProd ? "main" : Math.random() + "", {
+	mainWindow = createWindow(isProd ? "main" : Math.random() + "", {
 		width: 320,
 		height: 650,
 		minWidth: 320,
@@ -28,26 +28,31 @@ const startMainWindow = () => {
 };
 
 const noteWindows: { [id: string]: Electron.BrowserWindow } = {};
-const openNoteWindow = (id: string) => {
+const openNoteWindow = (id: string, opener: string) => {
 	let window = noteWindows[id];
 	if (window) {
 		if (window.isMinimized()) window.restore();
 		window.focus();
 		return;
 	}
+	const openerWindow = noteWindows[opener] || mainWindow;
+	const [x, y] = openerWindow.getPosition();
+	const [width] = openerWindow.getSize();
 	window = createWindow(id, {
 		height: 300,
 		width: 300,
 		minHeight: 300,
 		minWidth: 300,
+		x: x + width + 25,
+		y,
 	});
 	noteWindows[id] = window;
 	window.loadURL(baseUrl(`notes/${id}`));
 	window.on("close", () => (noteWindows[id] = null));
 };
 
-ipcMain.on("open note", (event, id) => {
-	openNoteWindow(id);
+ipcMain.on("open note", (event, id, opener) => {
+	openNoteWindow(id, opener);
 });
 
 (async () => {

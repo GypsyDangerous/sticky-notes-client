@@ -61,7 +61,7 @@ export const createWindow = (windowName: string, options: BrowserWindowConstruct
 		store.set(key, state);
 	};
 
-	state = ensureVisibleOnSomeDisplay(restore());
+	// state = ensureVisibleOnSomeDisplay(restore());
 
 	const browserOptions: BrowserWindowConstructorOptions = {
 		minHeight: 300,

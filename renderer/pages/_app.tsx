@@ -10,16 +10,20 @@ const client = new ApolloClient({
 });
 
 import GlobalStyle from "../styles/global.styles";
+import { useRef } from "react";
+import { Titlebar } from "custom-electron-titlebar";
 
 function MyApp({ Component, pageProps }) {
 	const router = useRouter();
+	const titlebarRef = useRef<Titlebar>()
 
 	useEffect(() => {
 		(async () => {
-			if (typeof window !== "undefined" && !router.asPath.includes("initial")) {
-				if (document.querySelector(".titlebar")) return;
+			if (typeof window !== "undefined") {
+				if (document.querySelector(".titlebar")) {
+					titlebarRef?.current?.dispose?.();
+				};
 				const customTitlebar = await import("custom-electron-titlebar");
-
 				const template: (MenuItemConstructorOptions | MenuItem)[] = [
 					{
 						label: "+",
@@ -39,8 +43,7 @@ function MyApp({ Component, pageProps }) {
 									}
 								`,
 							});
-							console.log(createNote);
-							ipcRenderer.send("open note", createNote.id);
+							ipcRenderer.send("open note", createNote.id, router?.query?.id);
 						},
 					},
 					{
@@ -57,10 +60,11 @@ function MyApp({ Component, pageProps }) {
 					minimizable: false,
 					menu: remote.Menu.buildFromTemplate(template),
 				});
+				titlebarRef.current = myTitleBar
 				myTitleBar.updateTitle("");
 			}
 		})();
-	}, []);
+	}, [router]);
 
 	return (
 		<>
@@ -78,12 +82,12 @@ function MyApp({ Component, pageProps }) {
 					href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
 					rel="stylesheet"
 				/>
-				{/* <link
+				<link
 					rel="preload"
 					href="https://cdn.jsdelivr.net/gh//GypsyDangerous/simple-css-reset/reset.css"
 					as="style"
 				/>
-				<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh//GypsyDangerous/simple-css-reset/reset.css" /> */}
+				<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh//GypsyDangerous/simple-css-reset/reset.css" />
 				<link
 					rel="stylesheet"
 					href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.css"

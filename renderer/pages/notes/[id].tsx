@@ -7,12 +7,14 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import { useRouter } from "next/router";
 import { debounce } from "lodash";
 import { useCallback } from "react";
+import { Note } from "../../models/note.model";
 
 const NoteQuery = gql`
 	query getNote($id: ID!) {
 		note(id: $id) {
 			rawText
 			text
+			backgroundColor
 		}
 	}
 `;
@@ -35,7 +37,12 @@ const QuillContainer = styled.div`
 	*,
 	*:before {
 		color: ${(props: { backgroundColor: string }) =>
-			chroma(props.backgroundColor).luminance() > 0.5 ? "black" : "white"} !important;
+			chroma(props.backgroundColor || "#000000").luminance() > 0.5 ? "black" : "white"} !important;
+	}
+	& pre,
+	* pre {
+		background: ${(props: { backgroundColor: string }) =>
+			chroma(props.backgroundColor || "#000000").luminance() > 0.5 ? "#fafafa" : "var(--background-light-gray)"} !important;
 	}
 	div {
 		border: none !important;
@@ -43,7 +50,7 @@ const QuillContainer = styled.div`
 	background: ${(props: { backgroundColor: string }) => props.backgroundColor};
 `;
 
-const Note = () => {
+const NoteComponent = () => {
 	const theme = "snow";
 	// const theme = 'bubble';
 
@@ -51,7 +58,7 @@ const Note = () => {
 
 	const { id } = router.query;
 
-	const { loading, error, data } = useQuery(NoteQuery, {
+	const { loading, error, data } = useQuery<{note: Note}>(NoteQuery, {
 		variables: { id: id || "no id" },
 	});
 
@@ -84,12 +91,12 @@ const Note = () => {
 	}, [data, quill]);
 
 	const onChange = useCallback(
-		debounce((delta, prev) => {
+		debounce(() => {
 			if (!id) return;
 			const editor = document.getElementsByClassName("ql-editor")[0] as HTMLElement;
 			updateNote({ variables: { id, rawText: editor.innerHTML, text: editor.innerText } });
 		}, 1000),
-		[id, router.query, router]
+		[]
 	);
 
 	useEffect(() => {
@@ -99,13 +106,13 @@ const Note = () => {
 				quill.off("text-change", onChange);
 			};
 		}
-	}, [quill]);
+	}, [quill, onChange]);
 
 	return (
-		<QuillContainer backgroundColor="#FFFF88">
+		<QuillContainer backgroundColor={data?.note.backgroundColor}>
 			<div id="quill-editor" ref={quillRef} />
 		</QuillContainer>
 	);
 };
 
-export default Note;
+export default NoteComponent;
